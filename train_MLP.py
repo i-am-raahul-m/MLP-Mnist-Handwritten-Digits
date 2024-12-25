@@ -1,33 +1,35 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 import matplotlib.pyplot as plt
 from mnist_viewer import load_mnist_images, load_mnist_labels
+from math import ceil
 import pickle
 
-# Model save path
-model_file_path = "model_variants/mlp8.pth"
 
-# HYPER-PARAMETERS
+### PATHS
+project_folder_path = ""
+model_file_path = "models/mlp8.pth"
+images_path = "dataset/train-images-idx3-ubyte/train-images-idx3-ubyte"
+labels_path = "dataset/train-labels-idx1-ubyte/train-labels-idx1-ubyte"
+
+
+### CONSTANTS
+dataset_size = 60000
+img_size = 28
+input_dim = img_size * img_size
+output_dim = 10
+
+
+### HYPER-PARAMETERS
 learning_rate = 0.00005
 batch_size = 32
 epochs = 30000
+num_of_batches = ceil(dataset_size / batch_size)
 
 
-### DATASET
-# Dataset CONSTANTS
-dataset_size = 60000
-images_path = 'train-images-idx3-ubyte/train-images-idx3-ubyte'
-labels_path = 'train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-
-# Loading entire dataset
-images = load_mnist_images(images_path)
-labels = load_mnist_labels(labels_path)
-
-
-# MLP Architecture
-
+### MLP ARCHITECTURE
 class MLP(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(MLP, self).__init__()
@@ -45,10 +47,9 @@ class MLP(nn.Module):
         return self.model(x)
 
 
-### tensor <--> label   
-# Obtaining output of MLP : tensor --> label
-
-def mlp_output(output_tensor):
+### TENSOR CREATION and CONVERTION 
+# tensor --> label
+def tensor2label(output_tensor):
     max_ind = 0
     for i in range(1, output_dim):
         if output_tensor[max_ind] < output_tensor[i]:
@@ -57,46 +58,21 @@ def mlp_output(output_tensor):
     return max_ind
 
 # label --> tensor
-
 def label2tensor(label):
     array = np.zeros(output_dim)
     array[label] = 1.0
     return torch.tensor(array, dtype=torch.float32)
 
-
-### MLP Training Context
-# USE-CASE WISE CONSTANTS
-img_size = 28
-input_dim = img_size*img_size
-output_dim = 10
-
-# Models
-mlp = MLP(input_dim=input_dim, output_dim=output_dim)
-
-# Loss Function
-loss_function = nn.CrossEntropyLoss()
-
-# Optimizer
-optimizer_mlp = optim.Adam(mlp.parameters(), lr=learning_rate)
-
-
-# Input tensor creation
-
+# Dataset image input tensor creation
 batch_num = 0
 def input_image_tensor(batch_size):
     offset = batch_num*batch_size
     image_np_array = images[offset:offset+batch_size,:]
-    
-    """
-    # Flatten
-    for i in range(batch_size):
-        image_np_array[i] = image_np_array[i].flatten()
-    """
-
     tensor = torch.tensor(image_np_array, dtype=torch.float32)
     tensor /= 255
     return tensor
 
+# Dataset Label input tensor creation
 def input_label_tensor(batch_size):
     global batch_num
     offset = batch_num*batch_size
@@ -111,8 +87,23 @@ def input_label_tensor(batch_size):
     return tensor
 
 
-# Training Loop
+### MLP Training Context
+# Models
+mlp = MLP(input_dim=input_dim, output_dim=output_dim)
 
+# Loss Function
+loss_function = nn.CrossEntropyLoss()
+
+# Optimizer
+optimizer_mlp = optim.Adam(mlp.parameters(), lr=learning_rate)
+
+
+### TRAINING THE MODEL
+# Loading entire dataset
+images = load_mnist_images(images_path)
+labels = load_mnist_labels(labels_path)
+
+# Training Loop
 mlp_loss_history = np.zeros(epochs)
 
 for epoch in range(epochs):
@@ -130,7 +121,7 @@ for epoch in range(epochs):
     mlp_loss_history[epoch] = mlp_loss_val
 
 
-### SAVING WORK
+### SAVING MODEL WEIGHTS and STATISTICS
 # Save built and trained mlp model
 torch.save(mlp.state_dict(), model_file_path)
 
