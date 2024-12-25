@@ -7,7 +7,7 @@ This repository contains a Python implementation of a Multi-Layer Perceptron (ML
 - **Dataset**: Uses the MNIST handwritten digits dataset (60,000 training images and 10,000 testing images).
 - **Model Architecture**: A fully connected neural network (MLP) designed for digit classification.
 - **Training**: Model is trained using standard supervised learning techniques.
-- **Evaluation**: Achieves high accuracy on the test set.
+- **Evaluation**: Achieves a reasonably high accuracy of (~98%) on the test dataset.
 - **Prediction**: Can predict handwritten digits from custom input images.
 
 ---
