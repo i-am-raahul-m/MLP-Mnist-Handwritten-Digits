@@ -96,7 +96,7 @@ Here are some sample predictions made by the model:
 
 |     Input Image     | Predicted Label |
 |---------------------|-----------------|
-| ![handwritten_digit]handwritten_digit.png |     Digit 8      |
+| ![handwritten_digit](handwritten_digit.png) |     Digit 8      |
 
 ---
 
@@ -105,7 +105,7 @@ Here are some sample predictions made by the model:
 - PyTorch
 - NumPy
 - Matplotlib
-- Python Imaging Library (PI)
+- Python Imaging Library (PIL)
 
 ## License
 
