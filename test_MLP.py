@@ -72,7 +72,7 @@ def input_label(test_idx):
 
 ### LOADING TESTING CONTEXT
 # Loading entire test dataset
-images = load_mnist_images(images_path)
+images = load_mnist_images(images_path, flattened=True)
 labels = load_mnist_labels(labels_path)
 
 # Loading saved model

@@ -98,7 +98,7 @@ optimizer_mlp = optim.Adam(mlp.parameters(), lr=learning_rate)
 
 ### TRAINING THE MODEL
 # Loading entire dataset
-images = load_mnist_images(images_path)
+images = load_mnist_images(images_path, flattened=True)
 labels = load_mnist_labels(labels_path)
 
 # Training Loop

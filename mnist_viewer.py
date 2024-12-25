@@ -3,7 +3,7 @@ import struct
 import matplotlib.pyplot as plt
 
 
-def load_mnist_images(file_path):
+def load_mnist_images(file_path, flattened=False):
     with open(file_path, 'rb') as f:
         # Read file header
         magic, num_images, rows, cols = struct.unpack('>IIII', f.read(16))
@@ -12,7 +12,10 @@ def load_mnist_images(file_path):
         
         # Read image data
         images = np.frombuffer(f.read(), dtype=np.uint8)
-        images = images.reshape(num_images, rows*cols)
+        if (flattened):
+            images = images.reshape(num_images, rows*cols)
+        else:
+            images = images.reshape(num_images, rows, cols)
     return images
 
 
