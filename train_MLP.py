@@ -9,10 +9,12 @@ import pickle
 
 
 ### PATHS
-project_folder_path = ""
-model_file_path = "models/mlp8.pth"
-images_path = "dataset/train-images-idx3-ubyte/train-images-idx3-ubyte"
-labels_path = "dataset/train-labels-idx1-ubyte/train-labels-idx1-ubyte"
+origin_path = ""
+model_num = 2
+model_file_path = origin_path + f"models/mlp{model_num}.pth"
+images_path = origin_path + "dataset/train-images-idx3-ubyte/train-images-idx3-ubyte"
+labels_path = origin_path + "dataset/train-labels-idx1-ubyte/train-labels-idx1-ubyte"
+train_stats_path = origin_path + "train/stats/pkl"
 
 
 ### CONSTANTS
@@ -25,7 +27,7 @@ output_dim = 10
 ### HYPER-PARAMETERS
 learning_rate = 0.00005
 batch_size = 32
-epochs = 30000
+epochs = 300
 num_of_batches = ceil(dataset_size / batch_size)
 
 
@@ -54,7 +56,6 @@ def tensor2label(output_tensor):
     for i in range(1, output_dim):
         if output_tensor[max_ind] < output_tensor[i]:
             max_ind = i
-
     return max_ind
 
 # label --> tensor
@@ -64,25 +65,18 @@ def label2tensor(label):
     return torch.tensor(array, dtype=torch.float32)
 
 # Dataset image input tensor creation
-batch_num = 0
-def input_image_tensor(batch_size):
-    offset = batch_num*batch_size
-    image_np_array = images[offset:offset+batch_size,:]
+def input_image_tensor(batch_idx, batch_size):
+    offset = batch_idx*batch_size
+    image_np_array = images[offset:offset+batch_size]
     tensor = torch.tensor(image_np_array, dtype=torch.float32)
     tensor /= 255
     return tensor
 
 # Dataset Label input tensor creation
-def input_label_tensor(batch_size):
-    global batch_num
-    offset = batch_num*batch_size
+def input_label_tensor(batch_idx, batch_size):
+    offset = batch_idx*batch_size
     label_np_array = labels[offset:offset+batch_size]
-    # label_np_array = np.vectorize(label2tensor)(label_np_array)  # One-hot encoding not required
-
-    batch_num += 1
-    if offset + batch_size >= dataset_size:
-        batch_num = 0
-
+    # label_np_array = np.vectorize(label2tensor)(label_np_array)  # One-hot encoding (not required)
     tensor = torch.tensor(label_np_array)
     return tensor
 
@@ -107,15 +101,18 @@ labels = load_mnist_labels(labels_path)
 mlp_loss_history = np.zeros(epochs)
 
 for epoch in range(epochs):
-    image_tensor = input_image_tensor(batch_size=batch_size)
-    label_tensor = input_label_tensor(batch_size=batch_size)
-    
-    optimizer_mlp.zero_grad()
-    output = mlp(image_tensor)
-    mlp_loss = loss_function(output, label_tensor)
-    mlp_loss.backward()
-    optimizer_mlp.step()
+    # Training the mlp layers
+    for batch_idx in range(num_of_batches):
+        image_tensor = input_image_tensor(batch_idx, batch_size)
+        label_tensor = input_label_tensor(batch_idx, batch_size)
+        
+        optimizer_mlp.zero_grad()
+        output = mlp(image_tensor)
+        mlp_loss = loss_function(output, label_tensor)
+        mlp_loss.backward()
+        optimizer_mlp.step()
 
+    # Storing loss values after every epoch
     mlp_loss_val = mlp_loss.item()
     print(f"Completed: {epoch}/{epochs}  Loss: {mlp_loss_val:.4f}")
     mlp_loss_history[epoch] = mlp_loss_val
