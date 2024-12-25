@@ -6,14 +6,19 @@ from mnist_viewer import load_mnist_images, load_mnist_labels
 from math import ceil
 import pickle
 
+### GPU COMPUTE
+gpu_available = torch.cuda.is_available()
+device = torch.device("cuda" if gpu_available else "cpu")
+print(f"Using device: {device}")
+
 
 ### PATHS
 origin_path = ""
-model_num = 2
+model_num = 0
 model_file_path = origin_path + f"models/mlp{model_num}.pth"
 images_path = origin_path + "dataset/train-images-idx3-ubyte/train-images-idx3-ubyte"
 labels_path = origin_path + "dataset/train-labels-idx1-ubyte/train-labels-idx1-ubyte"
-train_stats_path = origin_path + "train_stats.pkl"
+train_stats_path = origin_path + f"training_statistics/train_stats_mlp{model_num}.pkl"
 
 
 ### CONSTANTS
@@ -24,9 +29,9 @@ output_dim = 10
 
 
 ### HYPER-PARAMETERS
-learning_rate = 0.00005
+learning_rate = 0.001
 batch_size = 32
-epochs = 300
+epochs = 30
 num_of_batches = ceil(dataset_size / batch_size)
 
 
@@ -61,13 +66,13 @@ def tensor2label(output_tensor):
 def label2tensor(label):
     array = np.zeros(output_dim)
     array[label] = 1.0
-    return torch.tensor(array, dtype=torch.float32)
+    return torch.tensor(array, dtype=torch.float32, device=device)
 
 # Dataset image input tensor creation
 def input_image_tensor(batch_idx, batch_size):
     offset = batch_idx*batch_size
     image_np_array = images[offset:offset+batch_size]
-    tensor = torch.tensor(image_np_array, dtype=torch.float32)
+    tensor = torch.tensor(image_np_array, dtype=torch.float32, device=device)
     tensor /= 255
     return tensor
 
@@ -76,13 +81,13 @@ def input_label_tensor(batch_idx, batch_size):
     offset = batch_idx*batch_size
     label_np_array = labels[offset:offset+batch_size]
     # label_np_array = np.vectorize(label2tensor)(label_np_array)  # One-hot encoding (not required)
-    tensor = torch.tensor(label_np_array)
+    tensor = torch.tensor(label_np_array, device=device)
     return tensor
 
 
-### MLP Training Context
+### MLP TRAINING CONTEXT
 # Models
-mlp = MLP(input_dim=input_dim, output_dim=output_dim)
+mlp = MLP(input_dim=input_dim, output_dim=output_dim).to(device=device)
 
 # Loss Function
 loss_function = nn.CrossEntropyLoss()
@@ -101,6 +106,7 @@ mlp_loss_history = np.zeros(epochs)
 
 for epoch in range(epochs):
     # Training the mlp layers
+    avg_mlp_loss = 0
     for batch_idx in range(num_of_batches):
         image_tensor = input_image_tensor(batch_idx, batch_size)
         label_tensor = input_label_tensor(batch_idx, batch_size)
@@ -111,8 +117,11 @@ for epoch in range(epochs):
         mlp_loss.backward()
         optimizer_mlp.step()
 
+        avg_mlp_loss += mlp_loss
+    avg_mlp_loss /= num_of_batches
+
     # Storing loss values after every epoch
-    mlp_loss_val = mlp_loss.item()
+    mlp_loss_val = avg_mlp_loss.item()
     print(f"Completed: {epoch}/{epochs}  Loss: {mlp_loss_val: .4f}")
     mlp_loss_history[epoch] = mlp_loss_val
 
@@ -122,5 +131,5 @@ for epoch in range(epochs):
 torch.save(mlp.state_dict(), model_file_path)
 
 # Save training statistics
-with open("train_stats.pkl", "wb") as file:
+with open(train_stats_path, "wb") as file:
     pickle.dump(mlp_loss_history, file)
