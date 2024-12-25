@@ -92,7 +92,7 @@ Specify the path of the image file to be predicted in the "image_path" global va
 
 ### Sample Predictions
 
-Here are some sample predictions made by the model:
+Here is a sample prediction made by the model:
 
 |     Input Image     | Predicted Label |
 |---------------------|-----------------|
