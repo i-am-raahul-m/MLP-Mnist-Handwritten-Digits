@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
 from mnist_viewer import load_mnist_images, load_mnist_labels
 from math import ceil
 import pickle
@@ -14,7 +13,7 @@ model_num = 2
 model_file_path = origin_path + f"models/mlp{model_num}.pth"
 images_path = origin_path + "dataset/train-images-idx3-ubyte/train-images-idx3-ubyte"
 labels_path = origin_path + "dataset/train-labels-idx1-ubyte/train-labels-idx1-ubyte"
-train_stats_path = origin_path + "train/stats/pkl"
+train_stats_path = origin_path + "train_stats.pkl"
 
 
 ### CONSTANTS
@@ -114,7 +113,7 @@ for epoch in range(epochs):
 
     # Storing loss values after every epoch
     mlp_loss_val = mlp_loss.item()
-    print(f"Completed: {epoch}/{epochs}  Loss: {mlp_loss_val:.4f}")
+    print(f"Completed: {epoch}/{epochs}  Loss: {mlp_loss_val: .4f}")
     mlp_loss_history[epoch] = mlp_loss_val
 
 
